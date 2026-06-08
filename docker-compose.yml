@@ -1,0 +1,35 @@
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    ports:
+      - "4533:4533"
+    environment:
+      ND_MUSICFOLDER: /music
+      ND_SCANSCHEDULE: "@every 1m"
+      ND_LOGLEVEL: info
+      ND_SESSIONTIMEOUT: 24h
+    volumes:
+      - ./music:/music
+      - ./navidrome/data:/data
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    ports:
+      - "8080:8000"
+    environment:
+      YANDEX_TOKEN: ${YANDEX_TOKEN}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      MUSIC_PATH: /music
+    volumes:
+      - ./music:/music
+    restart: unless-stopped
+
+  ui:
+    build: ./ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped

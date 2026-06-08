@@ -1,0 +1,11 @@
+music/
+!music/.gitkeep
+.env
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+ui/dist/
+*.log
+.venv/
+navidrome/data/
