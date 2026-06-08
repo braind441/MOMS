@@ -5,7 +5,7 @@ Self-hosted музыкальный сервер: Navidrome + веб-интерф
 ## Стек
 
 - **Navidrome** :4533 — медиасервер, Subsonic API (для Yuzic/OnePlayer)
-- **MOMS API** :8000 — FastAPI бэкенд
+- **MOMS API** :8080 — FastAPI бэкенд
 - **MOMS UI** :3000 — React фронтенд
 - **yt-dlp + ffmpeg** — загрузка с YouTube/SoundCloud
 - **yandex-music-api** — загрузка с Яндекс.Музыки
