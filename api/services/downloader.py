@@ -122,7 +122,7 @@ async def create_job(name: str, source: str, raw_tracks: list[dict]) -> str:
 
 
 async def _run_job(job_id: str, music_path: str, output_folder: str):
-    from services import yandex, ytdlp
+    from services import yandex, ytdlp, tags
 
     job = _jobs[job_id]
     token = os.environ.get("YANDEX_TOKEN")
@@ -146,6 +146,7 @@ async def _run_job(job_id: str, music_path: str, output_folder: str):
             continue
 
         success = False
+        downloaded_path = None
 
         # Try Yandex first
         if track.yandex_id and track.available and token:
@@ -154,6 +155,7 @@ async def _run_job(job_id: str, music_path: str, output_folder: str):
                 track.status = TrackStatus.done
                 track.source = "yandex"
                 track_index[_normalize(f"{track.artist} - {track.title}")] = filepath
+                downloaded_path = filepath
                 success = True
             except Exception as e:
                 track.error = str(e)
@@ -166,6 +168,7 @@ async def _run_job(job_id: str, music_path: str, output_folder: str):
                     track.status = TrackStatus.done
                     track.source = "soundcloud"
                     track_index[_normalize(f"{track.artist} - {track.title}")] = result
+                    downloaded_path = result
                     success = True
             except Exception as e:
                 track.error = str(e)
@@ -178,6 +181,7 @@ async def _run_job(job_id: str, music_path: str, output_folder: str):
                     track.status = TrackStatus.done
                     track.source = "youtube"
                     track_index[_normalize(f"{track.artist} - {track.title}")] = result
+                    downloaded_path = result
                     success = True
             except Exception as e:
                 track.error = str(e)
@@ -185,11 +189,20 @@ async def _run_job(job_id: str, music_path: str, output_folder: str):
         if not success and track.status == TrackStatus.downloading:
             track.status = TrackStatus.not_found
 
+        if success and downloaded_path:
+            tags.write_tags(
+                downloaded_path,
+                title=track.title,
+                artist=track.artist,
+                album=track.album,
+                year=track.year,
+            )
+
         await _broadcast({"type": "update", "job_id": job_id, "track": track.model_dump()})
 
 
 async def retry_track(job_id: str, track_id: str, url: str):
-    from services import ytdlp
+    from services import ytdlp, tags
 
     job = _jobs.get(job_id)
     if not job:
@@ -208,4 +221,11 @@ async def retry_track(job_id: str, track_id: str, url: str):
     track.status = TrackStatus.done if result else TrackStatus.not_found
     if result:
         track.source = "manual"
+        tags.write_tags(
+            result,
+            title=track.title,
+            artist=track.artist,
+            album=track.album,
+            year=track.year,
+        )
     await _broadcast({"type": "update", "job_id": job_id, "track": track.model_dump()})

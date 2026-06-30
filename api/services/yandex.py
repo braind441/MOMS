@@ -85,34 +85,6 @@ async def get_playlist(url: str, token: str) -> tuple[str, list[dict]]:
     return await loop.run_in_executor(_executor, _get_playlist_sync, url, token)
 
 
-def _write_tags(filepath: str, title: str, artist: str, album: str, year: int = None):
-    ext = os.path.splitext(filepath)[1].lower()
-    try:
-        if ext == '.flac':
-            from mutagen.flac import FLAC
-            audio = FLAC(filepath)
-            audio['title'] = title
-            audio['artist'] = artist
-            audio['album'] = album
-            if year:
-                audio['date'] = str(year)
-            audio.save()
-        else:
-            from mutagen.id3 import ID3, TIT2, TPE1, TALB, TDRC, ID3NoHeaderError
-            try:
-                tags = ID3(filepath)
-            except ID3NoHeaderError:
-                tags = ID3()
-            tags['TIT2'] = TIT2(encoding=3, text=title)
-            tags['TPE1'] = TPE1(encoding=3, text=artist)
-            tags['TALB'] = TALB(encoding=3, text=album)
-            if year:
-                tags['TDRC'] = TDRC(encoding=3, text=str(year))
-            tags.save(filepath)
-    except Exception:
-        pass  # tagging is best-effort
-
-
 def _download_sync(track_data: dict, output_folder: str, token: str) -> str:
     from yandex_music import Client
     client = Client(token).init()
@@ -140,14 +112,6 @@ def _download_sync(track_data: dict, output_folder: str, token: str) -> str:
     filepath = os.path.join(output_folder, f"{safe_artist} - {safe_title}.{ext}")
 
     best.download(filepath)
-
-    _write_tags(
-        filepath,
-        title=track_data['title'],
-        artist=track_data['artist'],
-        album=track_data.get('album') or '',
-        year=track_data.get('year'),
-    )
     return filepath
 
 

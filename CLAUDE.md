@@ -123,7 +123,7 @@ moms/
 - **Дедупликация**: перед скачиванием строится индекс `normalize(artist - title) → filepath` по всему `/music`; если найдено — hard link, source="library"
 - **mutagen `if audio is not None`**: объект falsy при пустых тегах (наследует dict), поэтому не `if audio:`
 - **yt-dlp уникальные имена**: `_unique_path()` добавляет `(2)`, `(3)` при конфликте имён
-- **Теги Яндекс**: пишутся через mutagen после скачивания (ID3 для MP3, FLAC tags для FLAC)
+- **Теги**: единый модуль `services/tags.py` (`write_tags`), вызывается в `downloader.py` после ЛЮБОГО успешного скачивания (yandex/soundcloud/youtube/retry), метаданные из плейлиста. ID3 для MP3, FLAC tags для FLAC. Раньше теги писались только в ветке Яндекса → fallback на yt-dlp давал файлы без тегов
 - **port 8000 занят** tg-parser — MOMS API маппится на 8080
 - **WebSocket broadcast**: глобальный `_ws_clients: Set[WebSocket]`, нужен `global _ws_clients` в `_broadcast()`
 

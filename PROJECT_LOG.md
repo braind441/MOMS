@@ -1,5 +1,24 @@
 # PROJECT_LOG
 
+## 2026-06-30 — Развёртывание на VPS, доступ с iPhone, фикс тегов
+
+### Инфраструктура (VPS 95.85.229.224)
+
+- Navidrome: admin не был создан вообще (установка не завершена) — создан admin через `POST /auth/createAdmin`, пароль задан
+- ufw блокировал порт 4533 (политика DROP) — добавлено правило `allow 4533/tcp`; внешняя доступность подтверждена через check-host.net
+- iPhone: Yuzic (Subsonic) подключается по `http://95.85.229.224:4533`. Клиент ломился по HTTPS (Navidrome только HTTP) — отсюда было "Failed to connect"
+- OnePlayer не умеет Subsonic, только SMB/WebDAV (доступ к файлам). SMB через интернет не годится; рекомендован WebDAV
+- Плейлисты-папки не видны как плейлисты в Subsonic — сгенерированы `.m3u` на каждую папку, Navidrome импортировал их (импорт раньше блокировался отсутствием admin)
+- SSH на VPS: порт 8122
+
+### Фикс записи тегов (баг)
+
+- **Проблема**: теги писались только в ветке прямого скачивания с Яндекса. При fallback на yt-dlp (YouTube/SoundCloud) файлы оставались без тегов → в Navidrome "Unknown Artist"
+- `services/tags.py` — новый общий модуль `write_tags()` (ID3 для mp3, FLAC tags для flac), best-effort
+- `services/downloader.py` — `write_tags` вызывается после **любого** успешного скачивания (yandex/soundcloud/youtube) и в `retry_track`, метаданные берутся из плейлиста (track.artist/title/album/year)
+- `services/yandex.py` — удалён локальный `_write_tags` (централизовано)
+- `backup.sh` — исправлен путь `/home/openclaw/moms/` и добавлен порт SSH 8122
+
 ## 2026-06-08 — Библиотека, плеер, дедупликация
 
 ### Изменения
